@@ -1,4 +1,4 @@
-version: '3.9'
+﻿version: '3.9'
 
 services:
 
@@ -8,10 +8,17 @@ services:
 
     environment:
       ACCEPT_EULA: "Y"
-      SA_PASSWORD: "YourStrong@Passw0rd"
+      SA_PASSWORD: ${SA_PASSWORD}
 
     ports:
       - "1433:1433"
+
+    networks:
+      - product-network
+       
+    volumes:
+    - sql-data:/var/opt/mssql
+
 
   api:
     build:
@@ -21,7 +28,7 @@ services:
     container_name: myapi
 
     depends_on:
-      - sqlserver
+      - sqlserver       
 
     ports:
       - "5000:8080"
@@ -33,5 +40,18 @@ services:
         Server=sqlserver,1433;
         Database=ProductDb;
         User Id=sa;
-        Password=YourStrong@Passw0rd;
+        Password=${SA_PASSWORD};
         TrustServerCertificate=True;
+
+    networks:
+      - product-network
+
+
+# define the custom network
+networks:
+  product-network:
+    driver: bridge
+
+volumes:
+  sql-data:
+  

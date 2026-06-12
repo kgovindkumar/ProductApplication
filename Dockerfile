@@ -1,19 +1,37 @@
-﻿FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
+﻿# Runtime image (recommended non-alpine)
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
 WORKDIR /app
-EXPOSE 80
 
+# Create non-root user
+RUN addgroup --system appgroup \
+    && adduser --system --ingroup appgroup appuser
+
+EXPOSE 8080
+
+
+# Build stage
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
-COPY ["ProductApplication.csproj", "./"]
-RUN dotnet restore "ProductApplication.csproj"
+
+COPY ProductApplication.csproj ./
+RUN dotnet restore ProductApplication.csproj
+
 COPY . .
-WORKDIR "/src"
-RUN dotnet build "ProductApplication.csproj" -c Release -o /app/build
+RUN dotnet publish ProductApplication.csproj \
+    -c Release \
+    -o /app/publish \
+    --no-restore
 
-FROM build AS publish
-RUN dotnet publish "ProductApplication.csproj" -c Release -o /app/publish
 
+# Final image
 FROM base AS final
 WORKDIR /app
-COPY --from=publish /app/publish .
+
+ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
+
+COPY --from=build /app/publish .
+
+RUN chown -R appuser:appgroup /app
+USER appuser
+
 ENTRYPOINT ["dotnet", "ProductApplication.dll"]

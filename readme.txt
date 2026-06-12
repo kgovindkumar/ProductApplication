@@ -24,3 +24,9 @@ docker push localhost:5000/productapp:v2
 
 to pull the image from your registry or from anyother registry
 docker push localhost:5000/productapp:v2
+
+to take backup
+docker run --rm -v productapplication_sql-data:/data -v $(pwd):/backup alpine tar czf /backup/sql-data-backup.tar.gz -C /data .
+
+to restore backup
+docker run --rm -v productapplication_sql-data:/data -v $(pwd):/backup alpine sh -c "cd /data && tar xzf /backup/sql-data-backup.tar.gz"
